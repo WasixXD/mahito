@@ -1,26 +1,4 @@
 bits 64
-
-AF_INET equ 2
-SOCK_STREAM equ 1
-INADDR_ANY equ 0
-PORT equ 6000
-SIZE_OF_SERVER_ADDR equ 16
-
-BIND_ERROR db `[!] Error on bind() to socket\n`
-BIND_LEN equ $ - BIND_ERROR
-
-SOCKET_ERROR db `[!] Error on socket() to socket\n`
-SOCKET_LEN equ $ - SOCKET_ERROR
-
-LISTENING db `[*] Server listening at localhost:6000\n` 
-LISTENING_LEN equ $ - LISTENING
-
-CONNECT db `A client has connected\n`
-CONNECT_LEN equ $ - CONNECT
-
-section .bss
-    socketfd resb 4
-
 section .text
     extern socket, bind, listen, accept, perror
     global main
@@ -40,18 +18,20 @@ main:
     mov dword [rsp + 4], INADDR_ANY
 
     ; ; unsigned char data[8]
-    mov qword [rsp + 8], 0x0000000000000000
+    mov qword [rsp + 8], 0x0
 
     mov rdi, AF_INET
     mov rsi, SOCK_STREAM
     mov rdx, 0
     call socket
-    mov [socketfd], rax
 
     cmp rax, 0
     jl exit_socket_error
+
+    ; holding the socket_fd
+    mov r12, rax
     
-    mov rdi, [socketfd]
+    mov rdi, r12
     mov rsi, rsp
     mov rdx, SIZE_OF_SERVER_ADDR
     call bind
@@ -59,7 +39,7 @@ main:
     cmp rax, 0
     jl exit_bind_error
 
-    mov rdi, [socketfd]
+    mov rdi, r12
     mov rsi, 10
     call listen
 
@@ -67,16 +47,9 @@ main:
     jl exit_error
 
     call listening_msg
-;     ; number of clients
-    mov r15, 1
 
 while:
-;     ; alloc size equal to the number of clients
-    mov rax, r15
-    imul rax, SIZE_OF_SERVER_ADDR
-    sub rsp, rax
-    
-    mov rdi, [socketfd]
+    mov rdi, r12 
     mov rsi, rsp
     mov rdx, 4
     call accept
@@ -86,7 +59,6 @@ while:
 
     call client_connect
 
-    inc r15
     jmp while
 
 
@@ -133,3 +105,22 @@ client_connect:
     mov rdx, CONNECT_LEN
     syscall
     ret
+
+section .data
+    AF_INET equ 2
+    SOCK_STREAM equ 1
+    INADDR_ANY equ 0
+    PORT equ 6000
+    SIZE_OF_SERVER_ADDR equ 16
+
+    BIND_ERROR db `[!] Error on bind() to socket\n`
+    BIND_LEN equ $ - BIND_ERROR
+
+    SOCKET_ERROR db `[!] Error on socket() to socket\n`
+    SOCKET_LEN equ $ - SOCKET_ERROR
+
+    LISTENING db `[*] Server listening at localhost:6000\n` 
+    LISTENING_LEN equ $ - LISTENING
+
+    CONNECT db `A client has connected\n`
+    CONNECT_LEN equ $ - CONNECT

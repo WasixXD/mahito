@@ -8,24 +8,24 @@
 
 //         if((*client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
 
-struct Custom {
-    unsigned short int sin_family;
-    uint16_t sin_port;
-    uint32_t s_addr;
-    unsigned char data[8];
-};
+// struct Custom {
+//     unsigned short int sin_family;
+//     uint16_t sin_port;
+//     uint32_t s_addr;
+//     unsigned char data[8];
+// };
 
-void teste(int fd, struct Custom *c, int size) {
+// void teste(int fd, struct Custom *c, int size) {
      
-    printf("fd ->> %d\n", fd);
+//     printf("fd ->> %d\n", fd);
 
-    if((bind(fd, (struct sockaddr *)c, size)) < 0) {
-        perror("SEU MERDA");
-        return;
-    }
+//     if((bind(fd, (struct sockaddr *)c, size)) < 0) {
+//         perror("SEU MERDA");
+//         return;
+//     }
 
-    printf("Não deu pau\n");
-}
+//     printf("Não deu pau\n");
+// }
 
 // int main() {
 //     int server_fd;
