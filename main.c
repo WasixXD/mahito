@@ -6,6 +6,7 @@
 
 #define PORT 6000
 
+//         if((*client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
 
 struct Custom {
     unsigned short int sin_family;
@@ -14,17 +15,16 @@ struct Custom {
     unsigned char data[8];
 };
 
-
-
 void teste(int fd, struct Custom *c, int size) {
-    printf("sin_family -> %d\n", c->sin_family);
-    printf("sin_port -> %d\n", c->sin_port);
-    printf("s_addr -> %d\n", c->s_addr);
-    printf("data -> %s\n", c->data);
+     
+    printf("fd ->> %d\n", fd);
 
-    printf("fd -> %d\n", fd);
-    printf("sizeof -> %d\n", size);
+    if((bind(fd, (struct sockaddr *)c, size)) < 0) {
+        perror("SEU MERDA");
+        return;
+    }
 
+    printf("Não deu pau\n");
 }
 
 // int main() {
@@ -47,9 +47,6 @@ void teste(int fd, struct Custom *c, int size) {
 //     // server_addr.sin_addr.s_addr = INADDR_ANY;
 //     // server_addr.sin_port = htons(PORT);
 
-//     printf("socket size: %ld\n", sizeof(server_addr));
-//     exit(1);
-
 //     if(bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
 //         return -1;
 //     }
@@ -63,6 +60,7 @@ void teste(int fd, struct Custom *c, int size) {
 //     while(1) {
 //         struct sockaddr_in client_addr;
 //         socklen_t client_addr_len = sizeof(client_addr);
+//         printf("sizeof %ld\n", sizeof(client_addr_len));
 //         int *client_fd = malloc(sizeof(int));
 
 //         if((*client_fd = accept(server_fd, (struct sockaddr *)&client_addr, &client_addr_len)) < 0) {
