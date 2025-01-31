@@ -1,126 +1,126 @@
 bits 64
+
+SYS_SOCKET equ 41
+AF_INET equ 2
+SOCK_STREAM equ 1
+PROTOCOL equ 0
+
+SYS_BIND equ 49
+SYS_LISTEN equ 50
+BACKLOG equ 10
+
+SYS_ACCEPT equ 43
+
+SYS_READ equ 0
+
+buffer: times 256 db 0
+
+
+sockaddr:
+    sin_family: dw 2
+    sin_port: dw 0x901f
+    s_addr: dd 0
+    padding: dq 0
+    sockaddr_len: equ $ - sockaddr
+
+; sockaddr_in:
+;     sin_family: dw 0
+;     sin_port: dw 0
+;     s_addr: dd 0
+;     padding: dq 8
+;     sockaddr_in_len: equ $ - sockaddr
+
 section .text
-    extern socket, bind, listen, accept, perror
     global main
 
 main:
-    
-    ; allocating sockaddr_in
-    sub rsp, SIZE_OF_SERVER_ADDR
-
-    ; ; sin_family
-    mov word [rsp], AF_INET
-
-    ; ; sin_port 
-    mov word [rsp + 2], PORT
-
-    ; ; s_addr
-    mov dword [rsp + 4], INADDR_ANY
-
-    ; ; unsigned char data[8]
-    mov qword [rsp + 8], 0x0
-
+    mov rax, SYS_SOCKET
     mov rdi, AF_INET
     mov rsi, SOCK_STREAM
-    mov rdx, 0
-    call socket
-
+    mov rdx, PROTOCOL
+    syscall
     cmp rax, 0
-    jl exit_socket_error
+    jl exit_socket
 
-    ; holding the socket_fd
     mov r12, rax
+
+    mov rax, SYS_BIND
+    mov rdi, r12
+    mov rsi, sockaddr
+    mov rdx, 16
+    syscall
+
+    cmp rax, 0
+    jl exit_bind
+
+    mov rax, SYS_LISTEN
+    mov rdi, r12
+    mov rsi, BACKLOG
+    syscall
     
-    mov rdi, r12
-    mov rsi, rsp
-    mov rdx, SIZE_OF_SERVER_ADDR
-    call bind
-
     cmp rax, 0
-    jl exit_bind_error
-
-    mov rdi, r12
-    mov rsi, 10
-    call listen
-
-    cmp rax, 0
-    jl exit_error
-
-    call listening_msg
+    jl exit_listen
 
 while:
-    mov rdi, r12 
-    mov rsi, rsp
-    mov rdx, 4
-    call accept
+    mov rax, SYS_ACCEPT
+    mov rdi, r12
+    mov rsi, 0
+    mov rdx, 0
+    syscall
+
+
+    mov r13, rax
 
     cmp rax, 0
-    jl exit_error
+    jl exit_accept
 
-    call client_connect
+    mov rax, SYS_READ
+    mov rdi, r13
+    mov rsi, buffer
+    mov rdx, 256
+    syscall
+
+
+    ; mov rax, 3
+    ; mov rdi, r13
+    ; syscall
+
 
     jmp while
 
 
 
-exit_good:
+exit:
     mov rax, 60
     mov rdi, 0
     syscall
 
+    ret
 
-exit_socket_error:
-    mov rax, 1
-    mov rdi, 1    
-    mov rsi, SOCKET_ERROR
-    mov rdx, SOCKET_LEN
-    syscall
-    jmp exit_error
-
-exit_bind_error:
-    mov rax, 1
-    mov rdi, 1    
-    mov rsi, BIND_ERROR
-    mov rdx, BIND_LEN
-    syscall
-    jmp exit_error
-
-exit_error:
+exit_socket:
     mov rax, 60
     mov rdi, 1
     syscall
 
-listening_msg:
-    mov rax, 1
-    mov rdi, 1    
-    mov rsi, LISTENING
-    mov rdx, LISTENING_LEN
-    syscall
     ret
 
-client_connect:
-    mov rax, 1
-    mov rdi, 1    
-    mov rsi, CONNECT
-    mov rdx, CONNECT_LEN
+exit_bind:
+    mov rax, 60
+    mov rdi, 2
     syscall
+
     ret
 
-section .data
-    AF_INET equ 2
-    SOCK_STREAM equ 1
-    INADDR_ANY equ 0
-    PORT equ 6000
-    SIZE_OF_SERVER_ADDR equ 16
+exit_listen:
+    mov rax, 60
+    mov rdi, 3
+    syscall
 
-    BIND_ERROR db `[!] Error on bind() to socket\n`
-    BIND_LEN equ $ - BIND_ERROR
+    ret
 
-    SOCKET_ERROR db `[!] Error on socket() to socket\n`
-    SOCKET_LEN equ $ - SOCKET_ERROR
+exit_accept:
+    mov rax, 60
+    mov rdi, 4
+    syscall
 
-    LISTENING db `[*] Server listening at localhost:6000\n` 
-    LISTENING_LEN equ $ - LISTENING
-
-    CONNECT db `A client has connected\n`
-    CONNECT_LEN equ $ - CONNECT
+    ret
